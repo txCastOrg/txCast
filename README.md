@@ -11,7 +11,7 @@ Work is ongoing by bitcoin core developers to mitigate this risk by making chang
 This is time consuming.
 For users making frequent transactions a command-line tool may be useful. 
 
-**Note: Currently configured for testnet. **
+**Note: Currently configured for testnet.**
 Once reviewed the code will be modified to default to mainnet. To switch to mainnet now, remove `/testnet` from lines 68 and 70.** 
 
 Install tor. These are the instructions for linux:
