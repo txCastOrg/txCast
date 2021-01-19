@@ -12,7 +12,7 @@ This is time consuming.
 For users making frequent transactions a command-line tool may be useful. 
 
 **Note: Currently configured for testnet.**
-Once reviewed the code will be modified to default to mainnet. To switch to mainnet now, remove `/testnet` from lines 68 and 70.** 
+Once reviewed the code will be modified to default to mainnet. To switch to mainnet now, remove `/testnet` from lines 68 and 70.
 
 Install tor. These are the instructions for linux:
 1. `sudo apt install tor`
