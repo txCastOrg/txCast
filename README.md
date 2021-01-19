@@ -3,11 +3,11 @@
 Commandline tool to quickly broadcast signed transactions over tor.
 
 ## Motivation
-When a user broadcasts their transaction through their own node their peers could notice that this transaction is new to the network, and is likely being made by a wallet connected to your node.
+When a user broadcasts their transaction through their own node their peers could notice that this transaction is new to the network, and is likely being made by a wallet connected to a particular node.
 
 To minimise this risk users attempting to use bitcoin privately often broadcast their transactions over tor.
 
-Work is ongoing by bitcoin core developers to resolve this at the p2p level, however until those changes are merged less technical users must resort to downloading and installing the tor browser, finding an explorer with a .onion domain, navigating to the broadcast transaction page, entering their signed transaction and clicking broadcast. 
+Work is ongoing by bitcoin core developers to mitigate this risk by making changes at the p2p level, however until those changes are merged less technical users must resort to downloading and installing the tor browser, finding an explorer with a .onion domain, navigating to the broadcast transaction page, entering their signed transaction and clicking broadcast. 
 This is time consuming.
 For users making frequent transactions a command-line tool may be useful. 
 
