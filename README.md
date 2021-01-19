@@ -2,6 +2,18 @@
 
 Commandline tool to quickly broadcast signed transactions over tor.
 
+## Motivation
+When a user broadcasts their transaction through their own node their peers could notice that this transaction is new to the network, and is likely being made by a wallet connected to your node.
+
+To minimise this risk users attempting to use bitcoin privately often broadcast their transactions over tor.
+
+Work is ongoing by bitcoin core developers to resolve this at the p2p level, however until those changes are merged less technical users must resort to downloading and installing the tor browser, finding an explorer with a .onion domain, navigating to the broadcast transaction page, entering their signed transaction and clicking broadcast. 
+This is time consuming.
+For users making frequent transactions a command-line tool may be useful. 
+
+**Note: Currently configured for testnet. **
+Once reviewed the code will be modified to default to mainnet. To switch to mainnet now, remove `/testnet` from lines 68 and 70.** 
+
 Install tor. These are the instructions for linux:
 1. `sudo apt install tor`
 2. `sudo service tor start`
