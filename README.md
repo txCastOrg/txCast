@@ -24,7 +24,7 @@ Install tor. These are the instructions for linux:
 5. `sudo service tor stop`
 6. `sudo service tor start`
 7. Set password on line 8 of the txCast.py script to the password you entered in Step 3 (e.g. `password = "test"`)
-8. [Download](https://github.com/txCastOrg/txCast/blob/main/txCast.py) the python script
+8. Download the the python scripts [simple](https://github.com/txCastOrg/txCast/blob/main/txCast.py) or [staggered](https://github.com/txCastOrg/txCast/blob/main/txCast_stagger.py)
 9. Install requirements
 - `sudo apt install python3-venv python3-pip` to install pip 
 - `python3 -m pip install requests` to install [requests](https://2.python-requests.org/en/master/)
@@ -32,5 +32,8 @@ Install tor. These are the instructions for linux:
 - `pip install PySocks` to install [PySocks](https://pypi.org/project/PySocks/) (? Perhaps required? )
 10. Run the script with `python3 txCast.py`
 
-# Python Screenshot
+# Python Screenshot (txCast basic)
 ![](/txCast.png)
+
+# Python Screenshot (txCast Stagger)
+![](/txCast_stagger.png)
