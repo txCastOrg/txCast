@@ -4,6 +4,7 @@ import time
 import requests
 import secrets
 import json
+import getpass
 from datetime import datetime
 from datetime import timedelta
 from stem import Signal
@@ -45,7 +46,7 @@ class RPCHost(object):
 
 def main():
     global tor_password
-    tor_password = input("Enter tor password (set in .torrc): ")
+    tor_password = getpass.getpass(prompt="Enter tor password (set in .torrc): ")
     print("--- Performing tor check ---")
     renew_tor_ip()
     ip_tor = get_ip_tor()
@@ -58,8 +59,7 @@ def main():
         set_node()
         build_lists()
         process_all()
-        print("")
-        print("############################# TXCAST COMPLETE #############################")
+        conclude()
     else:
         print("")
         print("Aborted, tor Not Connected")
@@ -125,7 +125,7 @@ def set_node():
         print("     regtest: 18443")
         rpcPort = input("Enter bitcoin rpcPort (e.g. 8332): ")
         rpcUser = input("Enter bitcoin rpcUser: ")
-        rpcPassword = input("Enter bitcoin rpcPassword: ")
+        rpcPassword = getpass.getpass(prompt="Enter bitcoin rpcPassword: ")
         # Access RPC local server
         serverURL = 'http://' + rpcUser + ':' + rpcPassword + '@localhost:' + str(rpcPort)
         
@@ -251,10 +251,19 @@ def push_tx(payload):
 
 def check_local_mempool(txid):
     try:
-        host.call('getrawtransaction', txid)
+        # host.call('getrawtransaction', txid)
+        host.call('getmempoolentry', txid)
         inMempool = True
     except:
         inMempool = False
     return inMempool
+
+def conclude():
+    print("############################# TXCAST COMPLETE #############################")
+    if failed_tx_list:
+        print("")
+        print("The Following transactions were broadcast but were not seen in local mempool...")
+        for tx in failed_tx_list:
+            print(tx)
 
 main()
