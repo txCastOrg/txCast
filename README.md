@@ -16,7 +16,7 @@ This tool also randomises the broadcasts of multiple transactions, allowing you 
 **Note: Currently configured for testnet.**
 Once reviewed the code will be modified to default to mainnet. To switch to mainnet now, remove `/testnet` from relevant lines.
 
-Install bitcoin core in testnet
+## Install bitcoin core in testnet
 1. Edit your bitcoin.conf to incude
 ```
 testnet=1
@@ -27,7 +27,8 @@ rpcpassword=password
 ```
 2. Run bitcoin core (it will be in testnet mode, it might take some time to sync)
 
-Install tor. These are the instructions for linux:
+## Install tor. 
+These are the instructions for linux:
 1. `sudo apt install tor`
 2. `sudo service tor start`
 3. Hash a password using `tor --hash-password test` (Don't use the password `test` outside of testing)
@@ -37,7 +38,7 @@ Install tor. These are the instructions for linux:
 5. `sudo service tor stop`
 6. `sudo service tor start`
 
-Get txCast & Install Dependencies
+## Get txCast & Install Dependencies
 1. Download the repo `git clone https://github.com/txCastOrg/txCast`
 2. Install requirements
 - `sudo apt install python3-venv python3-pip` to install pip 
