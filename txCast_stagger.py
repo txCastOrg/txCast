@@ -12,6 +12,7 @@ from stem.control import Controller
 
 tx_list = []
 failed_tx_list = []
+not_in_mempool_tx_list = []
 time_list = []
 
 class RPCHost(object):
@@ -45,24 +46,55 @@ class RPCHost(object):
         return responseJSON['result']
 
 def main():
-    global tor_password
-    tor_password = getpass.getpass(prompt="Enter tor password (set in .torrc): ")
-    print("--- Performing tor check ---")
+    setup_tor()
+    setup_endpoint()
+    setup_node()
+    build_lists()
+    process_all()
+    conclude() 
+
+def setup_tor():
+    tor_ready = False
+    while tor_ready == False:
+        configure_tor()
+        tor_ready = check_tor()
+
+def setup_endpoint():
+    endpoint_ready = False
+    while endpoint_ready == False:
+        configure_endpoint()
+        endpoint_ready = check_endpoint()
+
+def setup_node():
+    node_ready = False
+    while node_ready == False:
+        configure_node()
+        node_ready = check_node()
+ 
+def configure_tor():
+    while True:
+        global tor_password
+        tor_password = getpass.getpass(prompt="Enter tor password (set in .torrc): ")
+        # Check tor is accessible
+        try: 
+            renew_tor_ip()
+            break
+        except:
+            print("Could not connect to tor node. Please try again.")
+    return
+
+def check_tor():
+    print("\n--- Performing tor check ---")
     renew_tor_ip()
     ip_tor = get_ip_tor()
     ip = get_ip()
-    print("IP without tor: " + str(ip))
-    print("IP with tor: " + str(ip_tor))
+    print("IP without tor   : " + str(ip))
+    print("IP with tor      : " + str(ip_tor))
     if ip != ip_tor:
-        print("Success! tor is running")
-        set_endpoint()
-        set_node()
-        build_lists()
-        process_all()
-        conclude()
+        tor_ready = True
     else:
-        print("")
-        print("Aborted, tor Not Connected")
+        tor_ready = False
+    return tor_ready
 
 def renew_tor_ip():
     with Controller.from_port(port=9051) as controller:
@@ -94,62 +126,117 @@ def get_ip():
     ip = ip.rpartition('\"')[0]
     return ip
 
-def set_endpoint():
-    global endpoint
-    print("--- Service Selection ---")
-    service = input("Enter m for mempool.space / b for blockstream.info then press ENTER: ")
-    if service == "m" or "M":
-        endpoint = "http://mempoolhqx4isw62xs7abwphsq7ldayuidyx2v2oethdhhj6mlo2r6ad.onion/testnet/api/tx"
-    elif service == "b" or "B":
-        endpoint = "http://explorerzydxu5ecjrkwceayqybizmpjjznk5izmitf2modhcusuqlid.onion/testnet/api/tx"
-    else:
-        print("Input not recognized")
-        set_endpoint()
+def configure_endpoint():
+    while True:
+        global endpoint
+        print("\n--- Service Selection ---")
+        service = input("Enter m for mempool.space / b for blockstream.info then press ENTER: ")
+        if service in ("m","M"):
+            endpoint = "http://mempoolhqx4isw62xs7abwphsq7ldayuidyx2v2oethdhhj6mlo2r6ad.onion/testnet/api/tx"
+            print("Endpoint Set: Mempool.Space | " + endpoint)
+            break
+        elif service in ("b","B"):
+            endpoint = "http://explorerzydxu5ecjrkwceayqybizmpjjznk5izmitf2modhcusuqlid.onion/testnet/api/tx"
+            print("Endpoint Set: Blockstream.Info | " + endpoint)
+            break
+        else:
+            print("Input not recognized. Please try again.")
     return    
 
-def set_node():
-    global rpcPort
-    global rpcUser
-    global rpcPassword
-    global host
-    global ownNode
-    print("--- Own Node Config ---")
-    ownNode = input("Are you running bitcoind on this machine? Enter Y if yes, n press ENTER: ")
-    if ownNode == "Y" or "y":
-        ownNode = True
-        # Get node info
-        print("rpcPort defaults:")
-        print("     mainnet: 8332")
-        print("     testnet: 18332")
-        print("     signet:  38332")
-        print("     regtest: 18443")
-        rpcPort = input("Enter bitcoin rpcPort (e.g. 8332): ")
-        rpcUser = input("Enter bitcoin rpcUser: ")
-        rpcPassword = getpass.getpass(prompt="Enter bitcoin rpcPassword: ")
-        # Access RPC local server
-        serverURL = 'http://' + rpcUser + ':' + rpcPassword + '@localhost:' + str(rpcPort)
-        
-        # Using the class defined in the bitcoin_rpc_class.py
-        host = RPCHost(serverURL)
-    else:
-        ownNode = False
-        print("Download, install and configure bitcoin core.")
+def check_endpoint():
+    #
+    # to-do
+    #
+    # Check endpoint connects rather than it exists?
+    try:
+        endpoint
+        endpoint_ready = True
+    except:
+        endpoint_ready = False
+    return endpoint_ready
+
+def configure_node():
+    while True:
+        global rpcPort
+        global rpcUser
+        global rpcPassword
+        global host
+        global ownNode
+        print("\n--- Own Node Config ---")
+        ownNode = input("Are you running bitcoind on this machine? Enter Y if yes, n press ENTER: ")
+        if ownNode in ("Y","y"):
+            ownNode = True
+            # Get node info
+            print("\nrpcPort defaults:")
+            print("     mainnet: 8332")
+            print("     testnet: 18332")
+            print("     signet:  38332")
+            print("     regtest: 18443\n")
+            rpcPort = input("Enter bitcoin rpcPort (e.g. 8332): ")
+            rpcUser = input("Enter bitcoin rpcUser            : ")
+            rpcPassword = getpass.getpass(prompt="Enter bitcoin rpcPassword        : ")
+            # Access RPC local server
+            serverURL = 'http://' + rpcUser + ':' + rpcPassword + '@localhost:' + str(rpcPort)
+            # Using the class defined in the bitcoin_rpc_class.py
+            host = RPCHost(serverURL)
+            break
+        else:
+            ownNode = False
+            print("Not checking local mempool.")
+            break
     return  
+
+def check_node():
+    # If using own node, check node is accessible
+    if ownNode == True:
+        try: 
+            host.call('getblockcount')
+            node_ready = True
+        except:
+            print("\nCould not connect to node. Please try again.\n")
+            node_ready = False
+    # If not using own node, proceed
+    else:
+        node_ready = True
+
+    return node_ready
 
 def build_lists():
     # Create randomly sorted list of transactions to broadcast:
     get_tx_list()
-    print("Number of Signed Transactions Entered: " + str(len(tx_list)))
+    print("\nNumber of Signed Transactions Entered: " + str(len(tx_list)))
     secrets.SystemRandom().shuffle(tx_list)
 
     # Create ordered random times at which to broadcast:
-    print("--- Set Delay ---")
-    user_input_minutes = int(input('Minutes: '))
-    user_input_hours = int(input('Hours: '))
-    user_input_days = int(input('Days: '))
+    print("\n--- Set Delay ---")
+    while True:
+        try:
+            user_input_minutes = int(input('Minutes: '))
+            #
+            # to-do
+            #
+            # How do cleanly deal with negative values here?
+            break
+        except ValueError:
+            print("Not an integer! Try again.")
+
+    while True:
+        try:
+            user_input_hours = int(input('Hours  : '))
+            break
+        except ValueError:
+            print("Not an integer! Try again.")
+    
+    while True:
+        try:
+            user_input_days = int(input('Days   : '))
+            break
+        except ValueError:
+            print("Not an integer! Try again.")
+
 
     start = datetime.now()
-    min_delay = timedelta(minutes=1)
+    min_delay = timedelta(minutes=0)
     min_time = start + min_delay
 
     max_delay = timedelta(minutes=user_input_minutes, hours=user_input_hours, days=user_input_days)
@@ -165,26 +252,47 @@ def build_lists():
     time_list.sort()
 
     # Print list of transactions & target broadcast times
-    print("--- txCast Schedule ---")
+    print("\n--- txCast Schedule ---")
     for i in range(0, len(tx_list)):
         print("Time: " + str(time_list[i]) + " | tx: " + str(tx_list[i])[:20] + "...")
 
+    return
+
+def get_tx_list():
+    global tx_list
+    print("\n--- Enter Signed Transactions ---")
+    print("Paste signed transaction (CTRL-SHIFT-V) then press ENTER\n")
+    finished = False
+    while not finished:
+        tx_next = input('tx: ')
+        if tx_next in ("X","x"):
+            finished = True
+        else:
+            tx_list.append(tx_next)
+            print("\nPaste next transaction and press ENTER or Type X then press ENTER to END")
     return
 
 def process_all():
     for i in range(0, len(tx_list)):
         print("")
         result = process_tx(i)
+        push_time = result[0]
+        inMempool = result[1]
+        valid = result[2]
 
-        if ownNode:
-            if result[1] == False:
-                print("Transaction " + str(i+1) + "not detected in local mempool")
-                failed_tx_list.append(i)
+        if valid:
+            if ownNode:
+                if inMempool == False:
+                    print("Transaction " + str(i+1) + "not detected in local mempool")
+                    not_in_mempool_tx_list.append(tx_list[i])
+                else:
+                    print("Transaction seen in local mempool")
             else:
-                print("Transaction seen in local mempool")
+                print("Transaction " + str(i+1) + "pushed to endpoint at " + str(push_time))
         else:
-            print("Transaction " + str(i+1) + "pushed to endpoint at " + str(result[0]))
-        
+            print("Invalid Transaction: " + tx_list[i])
+            failed_tx_list.append(tx_list[i])
+
         print(str(len(tx_list)-i-1) + " Transactions Remaining")
 
 def process_tx(i):
@@ -202,41 +310,40 @@ def process_tx(i):
         time_remaining = next_broadcast_time - current_time
 
     time.sleep(time_remaining.total_seconds())
-    push_tx(next_broadcast_tx)
-    push_time = datetime.now()
+
 
     if ownNode:
         # Decode txid from raw transaction (using local node)
-        txid = host.call('decoderawtransaction', next_broadcast_tx)['txid']
+        try:
+            valid = host.call('testmempoolaccept', [next_broadcast_tx])[0]['allowed']    
+            txid = host.call('testmempoolaccept', [next_broadcast_tx])[0]['txid']
+        except:
+            valid = False
         
-        # Check if transaction has hit mempool
-        inMempool = False
-        attempts = 0
-        while not inMempool and attempts < 10:
-            inMempool = check_local_mempool(txid)
-            time.sleep(6)
-            attempts += 1
-            # What if next time is within 6 seconds?
-    else:
-       inMempool = False
-
-    return push_time, inMempool
-
-def get_tx_list():
-    global tx_list
-    print("--- Enter Signed Transactions ---")
-    print("Paste signed transaction (CTRL-SHIFT-V) then press ENTER")
-    print("")
-    finished = False
-    while not finished:
-        tx_next = input('tx: ')
-        if tx_next == "X" or tx_next == "x":
-            finished = True
+        if valid:
+            push_tx(next_broadcast_tx)
+            push_time = datetime.now()
+            # Check if transaction has hit mempool
+            inMempool = False
+            attempts = 0
+            while not inMempool and attempts < 10:
+                inMempool = check_local_mempool(txid)
+                time.sleep(6)
+                attempts += 1
+                #
+                # to-do
+                # 
+                # What if next time is within 6 seconds?
         else:
-            tx_list.append(tx_next)
-            print("")
-            print("Paste next transaction and press ENTER or Type X then press ENTER to END")
-    return
+            inMempool = False
+            push_time = "not pushed"
+            
+    else:
+        push_tx(next_broadcast_tx)
+        push_time = datetime.now() 
+        inMempool = False
+
+    return push_time, inMempool, valid
 
 def push_tx(payload):
     session = requests.session()
@@ -259,11 +366,14 @@ def check_local_mempool(txid):
     return inMempool
 
 def conclude():
-    print("############################# TXCAST COMPLETE #############################")
+    print("\n############################# TXCAST COMPLETE #############################")
     if failed_tx_list:
-        print("")
-        print("The Following transactions were broadcast but were not seen in local mempool...")
+        print("\nThe Following transactions were invalid:")
         for tx in failed_tx_list:
+            print(tx)
+    if not_in_mempool_tx_list:
+        print("\nThe Following transactions were broadcast but were not seen in local mempool...")
+        for tx in not_in_mempool_tx_list:
             print(tx)
 
 main()
